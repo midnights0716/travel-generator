@@ -1,14 +1,12 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+export async function onRequestPost(context) {
+  const { prompt } = await context.request.json();
+  if (!prompt) return new Response('no prompt', { status: 400 });
 
-  const { prompt } = req.body;
-  if (!prompt) return res.status(400).json({ error: 'no prompt' });
-
-  const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+  const res = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.SF_API_KEY}`
+      'Authorization': `Bearer ${context.env.SF_API_KEY}`
     },
     body: JSON.stringify({
       model: 'Qwen/Qwen2.5-7B-Instruct',
@@ -17,6 +15,8 @@ export default async function handler(req, res) {
     })
   });
 
-  const data = await response.json();
-  res.status(200).json(data);
+  const data = await res.json();
+  return new Response(JSON.stringify(data), {
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
